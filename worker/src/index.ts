@@ -26,6 +26,12 @@ function jsonResponse(body: unknown, init?: ResponseInit) {
   return new Response(JSON.stringify(body), { ...init, headers });
 }
 
+function htmlResponse(html: string, init?: ResponseInit) {
+  const headers = new Headers(init?.headers);
+  headers.set("content-type", "text/html; charset=utf-8");
+  return new Response(html, { ...init, headers });
+}
+
 function corsHeaders() {
   return {
     "access-control-allow-origin": "*",
@@ -46,6 +52,11 @@ function badRequest(message: string) {
 
 function ok(body: unknown = { ok: true }) {
   return withCors(jsonResponse(body, { status: 200 }));
+}
+
+function okHtml(html: string) {
+  const res = htmlResponse(html, { status: 200, headers: corsHeaders() });
+  return withCors(res);
 }
 
 function getIdFromQuery(url: URL): string | null {
@@ -189,6 +200,34 @@ export default {
 
     if (req.method === "OPTIONS") {
       return withCors(new Response(null, { status: 204 }));
+    }
+
+    if (url.pathname === "/" && req.method === "GET") {
+      return okHtml(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Graspop Matchmaker API</title>
+    <style>
+      :root{color-scheme:dark}
+      body{margin:0;font:14px/1.45 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;background:#0b0f16;color:rgba(255,255,255,.92)}
+      main{max-width:720px;margin:0 auto;padding:24px}
+      a{color:#6ee7ff}
+      code{background:rgba(255,255,255,.06);padding:.15rem .35rem;border-radius:.4rem}
+      .card{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 16px;background:rgba(255,255,255,.04)}
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 style="margin:0 0 10px;font-size:18px">Graspop Matchmaker API</h1>
+      <div class="card">
+        <div>Health check: <a href="/api/health"><code>/api/health</code></a></div>
+        <div style="margin-top:8px;color:rgba(255,255,255,.66)">This Worker serves JSON endpoints under <code>/api/*</code> for the Graspop Matchmaker web app.</div>
+      </div>
+    </main>
+  </body>
+</html>`);
     }
 
     if (url.pathname === "/api/health") {
