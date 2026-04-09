@@ -1,12 +1,13 @@
 type UserProfile = {
   id: string;
+  tokenHash: string;
   nickname: string;
   selectedBands: string[];
   updatedAt: string;
 };
 
 type Match = {
-  id: string;
+  key: string;
   nickname: string;
   matchPct: number;
   sharedCount: number;
@@ -19,6 +20,18 @@ type Env = {
 
 const USER_PREFIX = "user:";
 const USER_TTL_SECONDS = 60 * 60 * 24 * 21; // 21 days (auto-expires via KV TTL)
+
+function hex(buf: ArrayBuffer) {
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function sha256Hex(input: string) {
+  const data = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return hex(digest);
+}
 
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const headers = new Headers(init?.headers);
@@ -55,8 +68,7 @@ function ok(body: unknown = { ok: true }) {
 }
 
 function okHtml(html: string) {
-  const res = htmlResponse(html, { status: 200, headers: corsHeaders() });
-  return withCors(res);
+  return withCors(htmlResponse(html, { status: 200 }));
 }
 
 function getIdFromQuery(url: URL): string | null {
@@ -85,6 +97,13 @@ function sanitizeSelectedBands(raw: unknown): string[] | null {
     if (out.length > 600) break;
   }
   return Array.from(new Set(out));
+}
+
+function sanitizeToken(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const token = raw.trim();
+  if (token.length < 16 || token.length > 120) return null;
+  return token;
 }
 
 function jaccard(a: string[], b: string[]) {
@@ -119,14 +138,27 @@ async function handleUpsertMe(req: Request, env: Env) {
   const id = typeof anyBody.id === "string" ? anyBody.id : null;
   if (!id || id.length < 8 || id.length > 80) return badRequest("Invalid id");
 
+  const token = sanitizeToken(anyBody.token);
+  if (!token) return badRequest("Invalid token");
+
   const nickname = sanitizeNickname(anyBody.nickname);
   if (!nickname) return badRequest("Invalid nickname (2–24 chars)");
 
   const selectedBands = sanitizeSelectedBands(anyBody.selectedBands);
   if (!selectedBands) return badRequest("Invalid selectedBands");
 
+  const existing = await loadUser(env, id);
+  if (existing) {
+    const tokenHash = await sha256Hex(token);
+    if (existing.tokenHash !== tokenHash) {
+      return withCors(jsonResponse({ error: "Forbidden" }, { status: 403 }));
+    }
+  }
+
+  const tokenHash = await sha256Hex(token);
   const profile: UserProfile = {
     id,
+    tokenHash,
     nickname,
     selectedBands,
     updatedAt: new Date().toISOString()
@@ -143,6 +175,7 @@ async function loadUser(env: Env, id: string): Promise<UserProfile | null> {
     const parsed = JSON.parse(raw) as UserProfile;
     if (!parsed || typeof parsed !== "object") return null;
     if (typeof parsed.id !== "string") return null;
+    if (typeof parsed.tokenHash !== "string") return null;
     if (typeof parsed.nickname !== "string") return null;
     if (!Array.isArray(parsed.selectedBands)) return null;
     return parsed;
@@ -170,7 +203,7 @@ async function handleMatches(url: URL, env: Env) {
     const sim = jaccard(me.selectedBands, other.selectedBands);
     if (sim.sharedCount <= 0) continue;
     matches.push({
-      id: other.id,
+      key: (await sha256Hex(other.id)).slice(0, 16),
       nickname: other.nickname,
       matchPct: sim.matchPct,
       sharedCount: sim.sharedCount,
@@ -187,9 +220,31 @@ async function handleMatches(url: URL, env: Env) {
   return ok({ matches });
 }
 
-async function handleDeleteMe(url: URL, env: Env) {
-  const id = getIdFromQuery(url);
-  if (!id) return badRequest("Missing id");
+async function handleDeleteMeRequest(req: Request, env: Env) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return badRequest("Invalid JSON");
+  }
+
+  if (typeof body !== "object" || body === null) return badRequest("Invalid body");
+  const anyBody = body as Record<string, unknown>;
+
+  const id = typeof anyBody.id === "string" ? anyBody.id : null;
+  if (!id || id.length < 8 || id.length > 80) return badRequest("Invalid id");
+
+  const token = sanitizeToken(anyBody.token);
+  if (!token) return badRequest("Invalid token");
+
+  const existing = await loadUser(env, id);
+  if (!existing) return ok({ ok: true });
+
+  const tokenHash = await sha256Hex(token);
+  if (existing.tokenHash !== tokenHash) {
+    return withCors(jsonResponse({ error: "Forbidden" }, { status: 403 }));
+  }
+
   await env.GRAS_KV.delete(`${USER_PREFIX}${id}`);
   return ok({ ok: true });
 }
@@ -239,7 +294,7 @@ export default {
     }
 
     if (url.pathname === "/api/me" && req.method === "DELETE") {
-      return handleDeleteMe(url, env);
+      return handleDeleteMeRequest(req, env);
     }
 
     if (url.pathname === "/api/matches" && req.method === "GET") {

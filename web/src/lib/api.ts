@@ -29,7 +29,10 @@ export async function getMatches(id: string): Promise<{ matches: Match[] }> {
   return requestJson(url(`/api/matches?${q.toString()}`), { method: "GET" });
 }
 
-export async function deleteMe(id: string): Promise<{ ok: true }> {
-  const q = new URLSearchParams({ id });
-  return requestJson(url(`/api/me?${q.toString()}`), { method: "DELETE" });
+export async function deleteMe(id: string, token: string): Promise<{ ok: true }> {
+  return requestJson(url("/api/me"), {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id, token })
+  });
 }

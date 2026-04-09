@@ -5,6 +5,7 @@ import { getMatches, upsertMe, deleteMe } from "./lib/api";
 import {
   getNickname,
   getOrCreateUuid,
+  getOrCreateToken,
   setNickname,
   clearLocalIdentity,
   getSelectedBands,
@@ -35,6 +36,7 @@ function useIsDesktop() {
 
 export function App() {
   const id = useMemo(() => getOrCreateUuid(), []);
+  const token = useMemo(() => getOrCreateToken(), []);
 
   const [nickname, setNicknameState] = useState(() => getNickname() ?? defaultNicknameFromUuid(id));
   const [needsNickname, setNeedsNickname] = useState(() => !(getNickname() ?? "").trim().length);
@@ -78,6 +80,7 @@ export function App() {
     try {
       await upsertMe({
         id,
+        token,
         nickname: nextNickname,
         selectedBands: Array.from(nextSelected)
       });
@@ -132,7 +135,7 @@ export function App() {
   async function deleteProfile() {
     try {
       setSyncError(null);
-      await deleteMe(id);
+      await deleteMe(id, token);
       clearBands();
       clearLocalIdentity();
       setNicknameState("");

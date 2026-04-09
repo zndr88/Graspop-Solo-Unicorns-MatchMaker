@@ -44,7 +44,7 @@ export function MatchPanel({
         ) : (
           <div className="matchList" style={{ marginTop: 8 }}>
             {top.map((m) => (
-              <div key={m.id} className="matchCard">
+              <div key={m.key} className="matchCard">
                 <div className="matchTop">
                   <div className="matchName">{m.nickname}</div>
                   <div className="matchPct">{pctLabel(m.matchPct)}</div>
@@ -82,4 +82,3 @@ export function MatchPanel({
     </div>
   );
 }
-

@@ -5,8 +5,8 @@ Cloudflare Worker backend for the Graspop Matchmaker MVP.
 ## Endpoints
 
 - `GET /api/health`
-- `PUT /api/me` `{ id, nickname, selectedBands[] }`
-- `DELETE /api/me?id=<uuid>`
+- `PUT /api/me` `{ id, token, nickname, selectedBands[] }`
+- `DELETE /api/me` `{ id, token }`
 - `GET /api/matches?id=<uuid>`
 
 ## Local dev
@@ -21,4 +21,3 @@ Cloudflare Worker backend for the Graspop Matchmaker MVP.
 
 - Uses KV TTL to auto-expire user records (default ~21 days).
 - Designed for small groups (KV `list()` + per-key `get()` is fine at WhatsApp-group scale).
-

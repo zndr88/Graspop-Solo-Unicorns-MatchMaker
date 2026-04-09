@@ -1,6 +1,7 @@
 const UUID_KEY = "gras_uuid";
 const NICKNAME_KEY = "gras_nickname";
 const SELECTED_KEY = "gras_selectedBands";
+const TOKEN_KEY = "gras_token";
 
 export function getOrCreateUuid(): string {
   const existing = localStorage.getItem(UUID_KEY);
@@ -25,6 +26,18 @@ export function setNickname(nickname: string) {
   localStorage.setItem(NICKNAME_KEY, nickname.trim());
 }
 
+export function getOrCreateToken(): string {
+  const existing = localStorage.getItem(TOKEN_KEY);
+  if (existing && existing.length >= 16) return existing;
+
+  const token =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `tok-${Math.random().toString(16).slice(2)}-${Date.now().toString(16)}`;
+  localStorage.setItem(TOKEN_KEY, token);
+  return token;
+}
+
 export function getSelectedBands(): string[] {
   const raw = localStorage.getItem(SELECTED_KEY);
   if (!raw) return [];
@@ -45,4 +58,5 @@ export function clearLocalIdentity() {
   localStorage.removeItem(UUID_KEY);
   localStorage.removeItem(NICKNAME_KEY);
   localStorage.removeItem(SELECTED_KEY);
+  localStorage.removeItem(TOKEN_KEY);
 }

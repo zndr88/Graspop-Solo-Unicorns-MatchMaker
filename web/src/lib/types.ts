@@ -9,16 +9,16 @@ export type LineupByDay = Record<DayName, Band[]>;
 
 export type UserProfile = {
   id: string;
+  token: string;
   nickname: string;
   selectedBands: string[];
   updatedAt?: string;
 };
 
 export type Match = {
-  id: string;
+  key: string;
   nickname: string;
   matchPct: number;
   sharedCount: number;
   sharedBands?: string[];
 };
-
