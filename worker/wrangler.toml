@@ -5,6 +5,6 @@ compatibility_date = "2026-04-09"
 # Create a KV namespace and paste its id here:
 #   wrangler kv:namespace create GRAS_KV
 kv_namespaces = [
-  { binding = "GRAS_KV", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+  { binding = "GRAS_KV", id = "85ad98bb0bdc425c925755f6d8f5b93b" }
 ]
 
