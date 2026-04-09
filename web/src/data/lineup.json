@@ -1,0 +1,25 @@
+{
+  "Thursday": [
+    { "id": "band-a", "name": "Band A" },
+    { "id": "band-b", "name": "Band B" },
+    { "id": "band-c", "name": "Band C" },
+    { "id": "band-d", "name": "Band D" }
+  ],
+  "Friday": [
+    { "id": "band-e", "name": "Band E" },
+    { "id": "band-f", "name": "Band F" },
+    { "id": "band-g", "name": "Band G" },
+    { "id": "band-h", "name": "Band H" }
+  ],
+  "Saturday": [
+    { "id": "band-i", "name": "Band I" },
+    { "id": "band-j", "name": "Band J" },
+    { "id": "band-k", "name": "Band K" }
+  ],
+  "Sunday": [
+    { "id": "band-l", "name": "Band L" },
+    { "id": "band-m", "name": "Band M" },
+    { "id": "band-n", "name": "Band N" }
+  ]
+}
+

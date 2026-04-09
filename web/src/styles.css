@@ -1,0 +1,346 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0f16;
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel-2: rgba(255, 255, 255, 0.09);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.66);
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: #6ee7ff;
+  --accent-2: #a78bfa;
+  --danger: #fb7185;
+  --ok: #34d399;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: radial-gradient(1200px 800px at 20% -10%, rgba(110, 231, 255, 0.16), transparent 60%),
+    radial-gradient(900px 700px at 120% 20%, rgba(167, 139, 250, 0.12), transparent 60%),
+    var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.appShell {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .appShell {
+    grid-template-columns: 1fr 360px;
+    align-items: start;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 12px;
+  color: var(--text);
+  outline: none;
+}
+
+.pillButton {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pillButton:active {
+  transform: translateY(1px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.daySection {
+  margin-top: 14px;
+}
+
+.dayTitle {
+  margin: 12px 2px 8px;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bandTile {
+  position: relative;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  cursor: pointer;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bandTile:hover {
+  border-color: rgba(110, 231, 255, 0.35);
+}
+
+.bandTileSelected {
+  border-color: rgba(110, 231, 255, 0.8);
+  background: linear-gradient(
+      180deg,
+      rgba(110, 231, 255, 0.18),
+      rgba(167, 139, 250, 0.12)
+    ),
+    var(--panel);
+}
+
+.bandName {
+  font-weight: 650;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.86);
+  flex: none;
+}
+
+.bandTileSelected .check {
+  border-color: rgba(110, 231, 255, 0.8);
+  background: rgba(110, 231, 255, 0.12);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(5, 8, 12, 0.55);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.panelHeader {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panelBody {
+  padding: 12px 14px 14px;
+}
+
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.matchCard {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: var(--panel);
+}
+
+.matchTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.matchName {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.matchPct {
+  font-variant-numeric: tabular-nums;
+  color: rgba(110, 231, 255, 0.9);
+  font-weight: 700;
+}
+
+.matchMeta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+.smallRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dangerButton {
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.35);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.okButton {
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(5, 8, 12, 0.85);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.drawer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: rgba(5, 8, 12, 0.92);
+  backdrop-filter: blur(14px);
+  max-height: 78vh;
+  overflow: auto;
+  box-shadow: var(--shadow);
+}
+
+.drawerHandle {
+  width: 54px;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 10px auto 6px;
+}
+
