@@ -8,3 +8,8 @@ kv_namespaces = [
   { binding = "GRAS_KV", id = "b49c74e317014373ad5d4e985c407222" }
 ]
 
+durable_objects = { bindings = [{ name = "GRAS_DO", class_name = "GrasStore" }] }
+
+[[migrations]]
+tag = "v1"
+new_classes = ["GrasStore"]

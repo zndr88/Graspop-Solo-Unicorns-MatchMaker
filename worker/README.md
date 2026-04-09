@@ -13,11 +13,12 @@ Cloudflare Worker backend for the Graspop Matchmaker MVP.
 
 1. `npm install`
 2. Create KV namespace:
-   - `npx wrangler kv:namespace create GRAS_KV`
+   - `npx wrangler kv namespace create GRAS_KV`
 3. Put the returned id into `wrangler.toml`
 4. `npm run dev`
 
 ## Notes
 
 - Uses KV TTL to auto-expire user records (default ~21 days).
-- Designed for small groups (KV `list()` + per-key `get()` is fine at WhatsApp-group scale).
+- Uses a Durable Object for user storage/matching so updates are strongly consistent (prevents UUID takeover).
+- KV is used for best-effort rate limiting (short-lived counters).
