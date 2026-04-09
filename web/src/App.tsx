@@ -15,6 +15,7 @@ import { NicknameGate } from "./components/NicknameGate";
 import { DaySection } from "./components/DaySection";
 import { MatchPanel } from "./components/MatchPanel";
 import { Drawer } from "./components/Drawer";
+import { tagFromId } from "./lib/tag";
 
 const LINEUP = lineup as LineupByDay;
 
@@ -50,6 +51,8 @@ export function App() {
 
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [myTag, setMyTag] = useState<string | null>(null);
   const debounceRef = useRef<number | null>(null);
 
   const allBandsById = useMemo(() => {
@@ -154,6 +157,24 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsNickname]);
 
+  useEffect(() => {
+    tagFromId(id).then(setMyTag).catch(() => {});
+  }, [id]);
+
+  async function copyMyTag() {
+    const tag = myTag ?? (await tagFromId(id).catch(() => null));
+    const label = `${nickname}${tag ? ` · ${tag}` : ""}`;
+    try {
+      await navigator.clipboard.writeText(label);
+      setToast("Copied: " + label);
+    } catch {
+      window.prompt("Copy this:", label);
+      setToast("Copied");
+    } finally {
+      window.setTimeout(() => setToast(null), 1800);
+    }
+  }
+
   const main = (
     <div>
       <div className="header">
@@ -193,10 +214,12 @@ export function App() {
   const panel = (
     <MatchPanel
       myNickname={nickname}
+      myTag={myTag}
       matches={matches}
       loading={syncing}
       error={syncError}
       onEditNickname={() => setNeedsNickname(true)}
+      onCopyTag={copyMyTag}
       onClearBands={clearBands}
       onDeleteProfile={deleteProfile}
     />
@@ -223,6 +246,7 @@ export function App() {
       </div>
 
       {!needsNickname && syncing ? <div className="toast">Syncing…</div> : null}
+      {toast ? <div className="toast">{toast}</div> : null}
     </div>
   );
 }

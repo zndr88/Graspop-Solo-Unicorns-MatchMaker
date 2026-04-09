@@ -8,18 +8,22 @@ function pctLabel(pct: number) {
 
 export function MatchPanel({
   myNickname,
+  myTag,
   matches,
   loading,
   error,
   onEditNickname,
+  onCopyTag,
   onClearBands,
   onDeleteProfile
 }: {
   myNickname: string;
+  myTag: string | null;
   matches: Match[];
   loading: boolean;
   error: string | null;
   onEditNickname: () => void;
+  onCopyTag: () => void;
   onClearBands: () => void;
   onDeleteProfile: () => void;
 }) {
@@ -29,9 +33,15 @@ export function MatchPanel({
     <div className="panel">
       <div className="panelHeader">
         <h2 className="panelTitle">Your matches</h2>
-        <button type="button" className="pillButton" onClick={onEditNickname}>
-          {myNickname}
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button type="button" className="pillButton" onClick={onEditNickname} title="Edit nickname">
+            {myNickname}
+            {myTag ? ` · ${myTag}` : ""}
+          </button>
+          <button type="button" className="pillButton" onClick={onCopyTag} title="Copy your name + tag">
+            Copy
+          </button>
+        </div>
       </div>
       <div className="panelBody">
         {error ? <div className="hint" style={{ color: "rgba(251,113,133,0.95)" }}>{error}</div> : null}
@@ -46,7 +56,9 @@ export function MatchPanel({
             {top.map((m) => (
               <div key={m.key} className="matchCard">
                 <div className="matchTop">
-                  <div className="matchName">{m.nickname}</div>
+                  <div className="matchName">
+                    {m.nickname} · {m.key.slice(0, 4).toUpperCase()}
+                  </div>
                   <div className="matchPct">{pctLabel(m.matchPct)}</div>
                 </div>
                 <div className="matchMeta">
