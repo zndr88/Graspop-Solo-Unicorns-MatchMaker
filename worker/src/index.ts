@@ -19,7 +19,12 @@ type Env = {
 };
 
 const USER_PREFIX = "user:";
+const RL_PREFIX = "rl:";
 const USER_TTL_SECONDS = 60 * 60 * 24 * 21; // 21 days (auto-expires via KV TTL)
+const RL_WINDOW_SECONDS = 60;
+const RL_LIMIT_MATCHES_PER_MIN = 30;
+const RL_LIMIT_WRITES_PER_MIN = 60;
+const RL_LIMIT_OTHER_PER_MIN = 120;
 
 function hex(buf: ArrayBuffer) {
   return Array.from(new Uint8Array(buf))
@@ -61,6 +66,15 @@ function withCors(res: Response) {
 
 function badRequest(message: string) {
   return withCors(jsonResponse({ error: message }, { status: 400 }));
+}
+
+function tooManyRequests(message: string) {
+  return withCors(
+    jsonResponse(
+      { error: message },
+      { status: 429, headers: { "retry-after": String(RL_WINDOW_SECONDS) } }
+    )
+  );
 }
 
 function ok(body: unknown = { ok: true }) {
@@ -122,6 +136,36 @@ function jaccard(a: string[], b: string[]) {
   const union = setA.size + setB.size - intersection;
   const matchPct = union === 0 ? 0 : (intersection / union) * 100;
   return { matchPct, sharedCount: intersection, sharedBands: shared };
+}
+
+function getClientIp(req: Request): string | null {
+  const ip =
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("true-client-ip") ??
+    req.headers.get("x-real-ip");
+  if (ip && ip.length <= 128) return ip;
+
+  const xff = req.headers.get("x-forwarded-for");
+  if (!xff) return null;
+  const first = xff.split(",")[0]?.trim();
+  if (first && first.length <= 128) return first;
+  return null;
+}
+
+async function rateLimit(req: Request, env: Env, bucket: string, limit: number): Promise<Response | null> {
+  const ip = getClientIp(req) ?? "unknown";
+  const windowKey = Math.floor(Date.now() / (RL_WINDOW_SECONDS * 1000));
+  const key = `${RL_PREFIX}${bucket}:${ip}:${windowKey}`;
+
+  const raw = await env.GRAS_KV.get(key);
+  const current = raw ? Number.parseInt(raw, 10) : 0;
+  const next = Number.isFinite(current) && current > 0 ? current + 1 : 1;
+
+  // Best-effort fixed-window rate limiting; acceptable for small-group scale.
+  await env.GRAS_KV.put(key, String(next), { expirationTtl: RL_WINDOW_SECONDS + 10 });
+
+  if (next > limit) return tooManyRequests("Rate limit exceeded. Try again in a minute.");
+  return null;
 }
 
 async function handleUpsertMe(req: Request, env: Env) {
@@ -255,6 +299,23 @@ export default {
 
     if (req.method === "OPTIONS") {
       return withCors(new Response(null, { status: 204 }));
+    }
+
+    // Rate limit everything except the root + health endpoints.
+    // Uses short-lived KV counters keyed by (bucket + IP + minute window).
+    if (url.pathname !== "/" && url.pathname !== "/api/health") {
+      const isMatches = url.pathname === "/api/matches" && req.method === "GET";
+      const isWrite = url.pathname === "/api/me" && (req.method === "PUT" || req.method === "DELETE");
+
+      const bucket = isMatches ? "matches" : isWrite ? "write" : "other";
+      const limit = isMatches
+        ? RL_LIMIT_MATCHES_PER_MIN
+        : isWrite
+          ? RL_LIMIT_WRITES_PER_MIN
+          : RL_LIMIT_OTHER_PER_MIN;
+
+      const blocked = await rateLimit(req, env, bucket, limit);
+      if (blocked) return blocked;
     }
 
     if (url.pathname === "/" && req.method === "GET") {
