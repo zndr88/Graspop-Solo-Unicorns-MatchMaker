@@ -11,7 +11,7 @@ Mobile-first web app to help solo Graspop adventurers find others with similar b
 
 - Stored per user: anonymous UUID, nickname, selected band ids, `updatedAt`
 - No real accounts, email, phone number, or passwords
-- Records auto-expire (KV TTL) after ~21 days (configurable in `worker/src/index.ts`)
+- Profiles are not auto-deleted before the festival; after the festival, inactive profiles are pruned automatically (configurable in `worker/src/store.ts`)
 
 ## Quick start (local dev)
 

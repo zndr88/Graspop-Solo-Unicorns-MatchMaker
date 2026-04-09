@@ -26,6 +26,12 @@ async function sha256Hex(input: string) {
   return hex(digest);
 }
 
+function toKey(id: string) {
+  // Short, non-reversible identifier for UI/admin purposes.
+  // Keep consistent with matches key format.
+  return sha256Hex(id).then((h) => h.slice(0, 16));
+}
+
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const headers = new Headers(init?.headers);
   headers.set("content-type", "application/json; charset=utf-8");
@@ -95,6 +101,15 @@ function jaccard(a: string[], b: string[]) {
 }
 
 const USER_PREFIX = "user:";
+// Auto-prune policy:
+// - Do not delete anyone before the festival.
+// - After the festival, prune inactive profiles after N days.
+//
+// Adjust these constants as needed.
+const PRUNE_NOT_BEFORE_ISO = "2026-06-22T00:00:00Z";
+const PRUNE_INACTIVE_DAYS_AFTER_FESTIVAL = 45;
+const PRUNE_NOT_BEFORE_MS = Date.parse(PRUNE_NOT_BEFORE_ISO);
+const PRUNE_INACTIVE_MS = PRUNE_INACTIVE_DAYS_AFTER_FESTIVAL * 24 * 60 * 60 * 1000;
 
 export class GrasStore implements DurableObject {
   private state: DurableObjectState;
@@ -109,6 +124,13 @@ export class GrasStore implements DurableObject {
     return `${USER_PREFIX}${id}`;
   }
 
+  private isExpired(updatedAt: string) {
+    if (Number.isFinite(PRUNE_NOT_BEFORE_MS) && Date.now() < PRUNE_NOT_BEFORE_MS) return false;
+    const t = Date.parse(updatedAt);
+    if (!Number.isFinite(t)) return false;
+    return Date.now() - t > PRUNE_INACTIVE_MS;
+  }
+
   private async loadUser(id: string): Promise<StoredUser | null> {
     const raw = await this.state.storage.get<string>(this.userKey(id));
     if (!raw) return null;
@@ -119,6 +141,11 @@ export class GrasStore implements DurableObject {
       if (typeof parsed.tokenHash !== "string") return null;
       if (typeof parsed.nickname !== "string") return null;
       if (!Array.isArray(parsed.selectedBands)) return null;
+      if (typeof parsed.updatedAt !== "string") return null;
+      if (this.isExpired(parsed.updatedAt)) {
+        await this.state.storage.delete(this.userKey(id));
+        return null;
+      }
       return parsed;
     } catch {
       return null;
@@ -211,7 +238,18 @@ export class GrasStore implements DurableObject {
         } catch {
           other = null;
         }
-        if (!other || typeof other.nickname !== "string" || !Array.isArray(other.selectedBands)) continue;
+        if (
+          !other ||
+          typeof other.nickname !== "string" ||
+          !Array.isArray(other.selectedBands) ||
+          typeof other.updatedAt !== "string"
+        ) {
+          continue;
+        }
+        if (this.isExpired(other.updatedAt)) {
+          await this.state.storage.delete(this.userKey(otherId));
+          continue;
+        }
 
         const sim = jaccard(me.selectedBands, other.selectedBands);
         if (sim.sharedCount <= 0) continue;
@@ -231,6 +269,71 @@ export class GrasStore implements DurableObject {
       });
 
       return ok({ matches });
+    }
+
+    if (url.pathname === "/api/admin/search" && req.method === "GET") {
+      const q = (url.searchParams.get("nickname") ?? "").trim().toLowerCase();
+      if (q.length < 2) return badRequest("nickname query too short");
+
+      const list = await this.state.storage.list<string>({ prefix: USER_PREFIX });
+      const results: Array<{ key: string; nickname: string; updatedAt: string; selectedCount: number }> = [];
+
+      for (const [key, raw] of list.entries()) {
+        const otherId = key.slice(USER_PREFIX.length);
+        if (!otherId) continue;
+        let other: StoredUser | null = null;
+        try {
+          other = JSON.parse(raw) as StoredUser;
+        } catch {
+          other = null;
+        }
+        if (!other || typeof other.nickname !== "string" || typeof other.updatedAt !== "string") continue;
+        if (this.isExpired(other.updatedAt)) {
+          await this.state.storage.delete(this.userKey(otherId));
+          continue;
+        }
+        if (!other.nickname.toLowerCase().includes(q)) continue;
+        results.push({
+          key: (await sha256Hex(other.id)).slice(0, 16),
+          nickname: other.nickname,
+          updatedAt: other.updatedAt,
+          selectedCount: Array.isArray(other.selectedBands) ? other.selectedBands.length : 0
+        });
+        if (results.length >= 50) break;
+      }
+
+      return ok({ results });
+    }
+
+    if (url.pathname === "/api/admin/delete" && req.method === "POST") {
+      let body: unknown;
+      try {
+        body = await req.json();
+      } catch {
+        return badRequest("Invalid JSON");
+      }
+      if (typeof body !== "object" || body === null) return badRequest("Invalid body");
+      const anyBody = body as Record<string, unknown>;
+      const targetKey = typeof anyBody.key === "string" ? anyBody.key.trim().toLowerCase() : "";
+      if (targetKey.length < 8) return badRequest("Missing key");
+
+      const list = await this.state.storage.list<string>({ prefix: USER_PREFIX });
+      for (const [key, raw] of list.entries()) {
+        const otherId = key.slice(USER_PREFIX.length);
+        if (!otherId) continue;
+        let other: StoredUser | null = null;
+        try {
+          other = JSON.parse(raw) as StoredUser;
+        } catch {
+          other = null;
+        }
+        if (!other || typeof other.id !== "string") continue;
+        const k = (await sha256Hex(other.id)).slice(0, 16).toLowerCase();
+        if (k !== targetKey) continue;
+        await this.state.storage.delete(this.userKey(otherId));
+        return ok({ ok: true });
+      }
+      return ok({ ok: true });
     }
 
     if (url.pathname === "/api/store-health" && req.method === "GET") {

@@ -3,6 +3,7 @@ import { GrasStore } from "./store";
 type Env = {
   GRAS_KV: KVNamespace;
   GRAS_DO: DurableObjectNamespace;
+  ADMIN_TOKEN?: string;
 };
 
 const BUILD_ID = "do-v1";
@@ -117,6 +118,17 @@ async function forwardToStore(req: Request, env: Env): Promise<Response> {
   return stub.fetch(forwarded);
 }
 
+function isAdminRequest(url: URL) {
+  return url.pathname.startsWith("/api/admin/");
+}
+
+function isAdminAuthorized(req: Request, env: Env) {
+  const secret = env.ADMIN_TOKEN;
+  if (!secret) return false;
+  const auth = req.headers.get("authorization") ?? "";
+  return auth === `Bearer ${secret}`;
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
@@ -187,6 +199,13 @@ export default {
     }
 
     if (url.pathname === "/api/store-health" && req.method === "GET") {
+      return withCors(await forwardToStore(req, env));
+    }
+
+    if (isAdminRequest(url)) {
+      if (!isAdminAuthorized(req, env)) {
+        return withCors(jsonResponse({ error: "Forbidden" }, { status: 403 }));
+      }
       return withCors(await forwardToStore(req, env));
     }
 

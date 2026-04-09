@@ -88,7 +88,7 @@ export function MatchPanel({
 
         <div style={{ height: 10 }} />
         <div className="hint">
-          Data expires automatically after the festival window (TTL on the backend). Keep it casual.
+          Profiles won’t be auto-deleted before the festival. After the festival, inactive profiles are pruned automatically.
         </div>
       </div>
     </div>
