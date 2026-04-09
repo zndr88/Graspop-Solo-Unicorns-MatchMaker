@@ -41,7 +41,11 @@ function forbidden() {
 }
 
 function ok(body: unknown = { ok: true }) {
-  return jsonResponse(body, { status: 200 });
+  const payload =
+    typeof body === "object" && body !== null
+      ? { store: "do", ...(body as Record<string, unknown>) }
+      : { store: "do", ok: true, value: body };
+  return jsonResponse(payload, { status: 200 });
 }
 
 function sanitizeNickname(raw: unknown): string | null {

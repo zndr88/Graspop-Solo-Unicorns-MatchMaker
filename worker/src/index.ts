@@ -5,6 +5,8 @@ type Env = {
   GRAS_DO: DurableObjectNamespace;
 };
 
+const BUILD_ID = "do-v1";
+
 const RL_PREFIX = "rl:";
 const RL_WINDOW_SECONDS = 60;
 const RL_LIMIT_MATCHES_PER_MIN = 30;
@@ -63,7 +65,7 @@ function tooManyRequests(message: string) {
 }
 
 function ok(body: unknown = { ok: true }) {
-  return withCors(jsonResponse(body, { status: 200 }));
+  return withCors(jsonResponse({ build: BUILD_ID, ...((body as object) ?? {}) }, { status: 200 }));
 }
 
 function okHtml(html: string) {
@@ -182,6 +184,14 @@ export default {
 
     if (url.pathname === "/api/matches" && req.method === "GET") {
       return withCors(await forwardToStore(req, env));
+    }
+
+    if (url.pathname === "/api/store-health" && req.method === "GET") {
+      return withCors(await forwardToStore(req, env));
+    }
+
+    if (url.pathname === "/api/version" && req.method === "GET") {
+      return ok({ ok: true, build: BUILD_ID });
     }
 
     return withCors(jsonResponse({ error: "Not found" }, { status: 404 }));
