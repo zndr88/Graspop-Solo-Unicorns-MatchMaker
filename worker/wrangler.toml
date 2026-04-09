@@ -12,4 +12,4 @@ durable_objects = { bindings = [{ name = "GRAS_DO", class_name = "GrasStore" }] 
 
 [[migrations]]
 tag = "v1"
-new_classes = ["GrasStore"]
+new_sqlite_classes = ["GrasStore"]
