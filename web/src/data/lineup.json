@@ -29,6 +29,10 @@
     { "id": "the-offspring", "name": "The Offspring" },
     { "id": "danko-jones", "name": "Danko Jones" },
     { "id": "sleep-theory", "name": "Sleep Theory" }
+	{ "id": "slay-squad", "name": "Slay Squad" }
+	{ "id": "dying-wish", "name": "Dying Wish" }
+	{ "id": "distant", "name": "Distant" }
+	{ "id": "blackgold", "name": "Blackgold" }
   ],
   "Friday": [
     { "id": "volbeat", "name": "Volbeat" },
@@ -53,12 +57,14 @@
     { "id": "thornhill", "name": "Thornhill" },
     { "id": "trivium", "name": "Trivium" },
     { "id": "we-came-as-romans", "name": "We Came As Romans" },
-    { "id": "cavalera", "name": "CAVALERA" },
+    { "id": "cavalera", "name": "CAVALERA CHAOS A.D." },
     { "id": "bush", "name": "Bush" },
     { "id": "quicksand", "name": "Quicksand" },
     { "id": "cradle-of-filth", "name": "Cradle of Filth" },
     { "id": "leprous", "name": "Leprous" },
     { "id": "harakiri-for-the-sky", "name": "Harakiri for the Sky" }
+    { "id": "hulder", "name": "Hulder" },
+    { "id": "sex-pistols", "name": "Sex Pistols w Frank Carter" },
   ],
   "Saturday": [
     { "id": "bring-me-the-horizon", "name": "Bring Me the Horizon" },

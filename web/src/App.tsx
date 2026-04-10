@@ -220,6 +220,7 @@ export function App() {
       error={syncError}
       onEditNickname={() => setNeedsNickname(true)}
       onCopyTag={copyMyTag}
+      onClose={isDesktop ? undefined : () => setMatchesOpen(false)}
       onClearBands={clearBands}
       onDeleteProfile={deleteProfile}
     />

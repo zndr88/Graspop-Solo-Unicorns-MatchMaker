@@ -92,7 +92,7 @@ function jaccard(a: string[], b: string[]) {
   for (const x of setA) {
     if (setB.has(x)) {
       intersection += 1;
-      if (shared.length < 5) shared.push(x);
+      shared.push(x);
     }
   }
   const union = setA.size + setB.size - intersection;

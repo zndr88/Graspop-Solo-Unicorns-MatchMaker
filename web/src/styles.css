@@ -244,6 +244,21 @@ input {
   background: var(--panel);
 }
 
+.matchCardButton {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.matchCardButton:active {
+  transform: translateY(1px);
+}
+
+.matchCardExpanded {
+  border-color: rgba(110, 231, 255, 0.35);
+  background: linear-gradient(180deg, rgba(110, 231, 255, 0.08), rgba(167, 139, 250, 0.06)), var(--panel);
+}
+
 .matchTop {
   display: flex;
   align-items: baseline;
@@ -267,6 +282,12 @@ input {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
+}
+
+.sharedBandsFull {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.45;
 }
 
 .divider {
@@ -343,4 +364,3 @@ input {
   background: rgba(255, 255, 255, 0.22);
   margin: 10px auto 6px;
 }
-

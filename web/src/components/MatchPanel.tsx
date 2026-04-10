@@ -1,9 +1,16 @@
 import type { Match } from "../lib/types";
+import { useMemo, useState } from "react";
 
 function pctLabel(pct: number) {
   if (!Number.isFinite(pct)) return "0%";
   const rounded = Math.round(pct);
   return `${rounded}%`;
+}
+
+function moreLabel(sharedCount: number, shown: number) {
+  const more = sharedCount - shown;
+  if (more <= 0) return "";
+  return ` +${more} more`;
 }
 
 export function MatchPanel({
@@ -14,6 +21,7 @@ export function MatchPanel({
   error,
   onEditNickname,
   onCopyTag,
+  onClose,
   onClearBands,
   onDeleteProfile
 }: {
@@ -24,16 +32,26 @@ export function MatchPanel({
   error: string | null;
   onEditNickname: () => void;
   onCopyTag: () => void;
+  onClose?: () => void;
   onClearBands: () => void;
   onDeleteProfile: () => void;
 }) {
   const top = matches.slice(0, 20);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  const byKey = useMemo(() => new Map(top.map((m) => [m.key, m])), [top]);
+  const expanded = expandedKey ? byKey.get(expandedKey) ?? null : null;
 
   return (
     <div className="panel">
       <div className="panelHeader">
         <h2 className="panelTitle">Your matches</h2>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {onClose ? (
+            <button type="button" className="pillButton" onClick={onClose} title="Back to bands">
+              Back
+            </button>
+          ) : null}
           <button type="button" className="pillButton" onClick={onEditNickname} title="Edit nickname">
             {myNickname}
             {myTag ? ` · ${myTag}` : ""}
@@ -54,7 +72,13 @@ export function MatchPanel({
         ) : (
           <div className="matchList" style={{ marginTop: 8 }}>
             {top.map((m) => (
-              <div key={m.key} className="matchCard">
+              <button
+                key={m.key}
+                type="button"
+                className={`matchCard matchCardButton ${expandedKey === m.key ? "matchCardExpanded" : ""}`}
+                onClick={() => setExpandedKey((prev) => (prev === m.key ? null : m.key))}
+                aria-expanded={expandedKey === m.key}
+              >
                 <div className="matchTop">
                   <div className="matchName">
                     {m.nickname} · {m.key.slice(0, 4).toUpperCase()}
@@ -64,13 +88,20 @@ export function MatchPanel({
                 <div className="matchMeta">
                   {m.sharedCount} shared band{m.sharedCount === 1 ? "" : "s"}
                   {m.sharedBands && m.sharedBands.length ? (
-                    <>
-                      {" "}
-                      • {m.sharedBands.join(", ")}
-                    </>
+                    expandedKey === m.key ? (
+                      <>
+                        <div className="sharedBandsFull">{m.sharedBands.join(", ")}</div>
+                      </>
+                    ) : (
+                      <>
+                        {" "}
+                        • {m.sharedBands.slice(0, 5).join(", ")}
+                        {moreLabel(m.sharedCount, Math.min(5, m.sharedBands.length))}
+                      </>
+                    )
                   ) : null}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
