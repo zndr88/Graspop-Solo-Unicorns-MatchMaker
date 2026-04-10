@@ -111,13 +111,22 @@ const PRUNE_INACTIVE_DAYS_AFTER_FESTIVAL = 45;
 const PRUNE_NOT_BEFORE_MS = Date.parse(PRUNE_NOT_BEFORE_ISO);
 const PRUNE_INACTIVE_MS = PRUNE_INACTIVE_DAYS_AFTER_FESTIVAL * 24 * 60 * 60 * 1000;
 
+// In-memory rate limiting (per Durable Object instance).
+// This avoids burning Workers KV operations on every request.
+const RL_WINDOW_MS = 60_000;
+const RL_MATCHES_PER_MIN = 30;
+const RL_WRITES_PER_MIN = 60;
+const RL_OTHER_PER_MIN = 120;
+
 export class GrasStore implements DurableObject {
   private state: DurableObjectState;
   private startedAt: number;
+  private rate: Map<string, number>;
 
   constructor(state: DurableObjectState) {
     this.state = state;
     this.startedAt = Date.now();
+    this.rate = new Map();
   }
 
   private userKey(id: string) {
@@ -129,6 +138,39 @@ export class GrasStore implements DurableObject {
     const t = Date.parse(updatedAt);
     if (!Number.isFinite(t)) return false;
     return Date.now() - t > PRUNE_INACTIVE_MS;
+  }
+
+  private getClientIp(req: Request): string {
+    const ip =
+      req.headers.get("cf-connecting-ip") ??
+      req.headers.get("true-client-ip") ??
+      req.headers.get("x-real-ip");
+    if (ip && ip.length <= 128) return ip;
+    const xff = req.headers.get("x-forwarded-for");
+    const first = xff?.split(",")[0]?.trim();
+    if (first && first.length <= 128) return first;
+    return "unknown";
+  }
+
+  private tooMany() {
+    return jsonResponse({ store: "do", error: "Rate limit exceeded. Try again in a minute." }, { status: 429 });
+  }
+
+  private rateLimit(req: Request, bucket: "matches" | "write" | "other"): Response | null {
+    const ip = this.getClientIp(req);
+    const windowKey = Math.floor(Date.now() / RL_WINDOW_MS);
+    const key = `${bucket}:${ip}:${windowKey}`;
+    const current = this.rate.get(key) ?? 0;
+    const next = current + 1;
+    this.rate.set(key, next);
+
+    // Opportunistic cleanup: clear map if it grows too large.
+    if (this.rate.size > 5000) this.rate.clear();
+
+    const limit =
+      bucket === "matches" ? RL_MATCHES_PER_MIN : bucket === "write" ? RL_WRITES_PER_MIN : RL_OTHER_PER_MIN;
+    if (next > limit) return this.tooMany();
+    return null;
   }
 
   private async loadUser(id: string): Promise<StoredUser | null> {
@@ -154,6 +196,17 @@ export class GrasStore implements DurableObject {
 
   async fetch(req: Request): Promise<Response> {
     const url = new URL(req.url);
+
+    if (url.pathname.startsWith("/api/")) {
+      const bucket =
+        url.pathname === "/api/matches"
+          ? ("matches" as const)
+          : url.pathname === "/api/me" && (req.method === "PUT" || req.method === "DELETE")
+            ? ("write" as const)
+            : ("other" as const);
+      const blocked = this.rateLimit(req, bucket);
+      if (blocked) return blocked;
+    }
 
     if (url.pathname === "/api/me" && req.method === "PUT") {
       let body: unknown;

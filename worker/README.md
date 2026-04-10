@@ -24,7 +24,7 @@ Cloudflare Worker backend for the Graspop Matchmaker MVP.
 
 - Uses KV TTL to auto-expire user records (default ~21 days).
 - Uses a Durable Object for user storage/matching so updates are strongly consistent (prevents UUID takeover).
-- KV is used for best-effort rate limiting (short-lived counters).
+- Rate limiting is handled inside the Durable Object (in-memory) to avoid burning KV free-tier operations.
 - The KV namespace `id` in `wrangler.toml` is not a secret; don’t commit API tokens or `.dev.vars`.
 
 ## Admin cleanup (orphaned profiles)

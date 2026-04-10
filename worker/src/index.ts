@@ -1,30 +1,11 @@
 import { GrasStore } from "./store";
 
 type Env = {
-  GRAS_KV: KVNamespace;
   GRAS_DO: DurableObjectNamespace;
   ADMIN_TOKEN?: string;
 };
 
 const BUILD_ID = "do-v1";
-
-const RL_PREFIX = "rl:";
-const RL_WINDOW_SECONDS = 60;
-const RL_LIMIT_MATCHES_PER_MIN = 30;
-const RL_LIMIT_WRITES_PER_MIN = 60;
-const RL_LIMIT_OTHER_PER_MIN = 120;
-
-function hex(buf: ArrayBuffer) {
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function sha256Hex(input: string) {
-  const data = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return hex(digest);
-}
 
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const headers = new Headers(init?.headers);
@@ -56,15 +37,6 @@ function badRequest(message: string) {
   return withCors(jsonResponse({ error: message }, { status: 400 }));
 }
 
-function tooManyRequests(message: string) {
-  return withCors(
-    jsonResponse(
-      { error: message },
-      { status: 429, headers: { "retry-after": String(RL_WINDOW_SECONDS) } }
-    )
-  );
-}
-
 function ok(body: unknown = { ok: true }) {
   return withCors(jsonResponse({ build: BUILD_ID, ...((body as object) ?? {}) }, { status: 200 }));
 }
@@ -78,36 +50,6 @@ function getIdFromQuery(url: URL): string | null {
   if (!id) return null;
   if (id.length < 8 || id.length > 80) return null;
   return id;
-}
-
-function getClientIp(req: Request): string | null {
-  const ip =
-    req.headers.get("cf-connecting-ip") ??
-    req.headers.get("true-client-ip") ??
-    req.headers.get("x-real-ip");
-  if (ip && ip.length <= 128) return ip;
-
-  const xff = req.headers.get("x-forwarded-for");
-  if (!xff) return null;
-  const first = xff.split(",")[0]?.trim();
-  if (first && first.length <= 128) return first;
-  return null;
-}
-
-async function rateLimit(req: Request, env: Env, bucket: string, limit: number): Promise<Response | null> {
-  const ip = getClientIp(req) ?? "unknown";
-  const windowKey = Math.floor(Date.now() / (RL_WINDOW_SECONDS * 1000));
-  const key = `${RL_PREFIX}${bucket}:${ip}:${windowKey}`;
-
-  const raw = await env.GRAS_KV.get(key);
-  const current = raw ? Number.parseInt(raw, 10) : 0;
-  const next = Number.isFinite(current) && current > 0 ? current + 1 : 1;
-
-  // Best-effort fixed-window rate limiting; acceptable for small-group scale.
-  await env.GRAS_KV.put(key, String(next), { expirationTtl: RL_WINDOW_SECONDS + 10 });
-
-  if (next > limit) return tooManyRequests("Rate limit exceeded. Try again in a minute.");
-  return null;
 }
 
 async function forwardToStore(req: Request, env: Env): Promise<Response> {
@@ -135,23 +77,6 @@ export default {
 
     if (req.method === "OPTIONS") {
       return withCors(new Response(null, { status: 204 }));
-    }
-
-    // Rate limit everything except the root + health endpoints.
-    // Uses short-lived KV counters keyed by (bucket + IP + minute window).
-    if (url.pathname !== "/" && url.pathname !== "/api/health") {
-      const isMatches = url.pathname === "/api/matches" && req.method === "GET";
-      const isWrite = url.pathname === "/api/me" && (req.method === "PUT" || req.method === "DELETE");
-
-      const bucket = isMatches ? "matches" : isWrite ? "write" : "other";
-      const limit = isMatches
-        ? RL_LIMIT_MATCHES_PER_MIN
-        : isWrite
-          ? RL_LIMIT_WRITES_PER_MIN
-          : RL_LIMIT_OTHER_PER_MIN;
-
-      const blocked = await rateLimit(req, env, bucket, limit);
-      if (blocked) return blocked;
     }
 
     if (url.pathname === "/" && req.method === "GET") {
