@@ -5,3 +5,4 @@ dist
 .env.*
 .dev.vars
 .wrangler
+web/mock/graspop-style-mock.html
