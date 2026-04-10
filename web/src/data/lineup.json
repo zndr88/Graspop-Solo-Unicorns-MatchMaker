@@ -28,11 +28,11 @@
     { "id": "wolves-in-the-throne-room", "name": "Wolves in the Throne Room" },
     { "id": "the-offspring", "name": "The Offspring" },
     { "id": "danko-jones", "name": "Danko Jones" },
-    { "id": "sleep-theory", "name": "Sleep Theory" }
-	{ "id": "slay-squad", "name": "Slay Squad" }
-	{ "id": "dying-wish", "name": "Dying Wish" }
-	{ "id": "distant", "name": "Distant" }
-	{ "id": "blackgold", "name": "Blackgold" }
+    { "id": "sleep-theory", "name": "Sleep Theory" },
+    { "id": "slay-squad", "name": "Slay Squad" },
+    { "id": "dying-wish", "name": "Dying Wish" },
+    { "id": "distant", "name": "Distant" },
+    { "id": "blackgold", "name": "Blackgold" }
   ],
   "Friday": [
     { "id": "volbeat", "name": "Volbeat" },
@@ -63,8 +63,6 @@
     { "id": "cradle-of-filth", "name": "Cradle of Filth" },
     { "id": "leprous", "name": "Leprous" },
     { "id": "harakiri-for-the-sky", "name": "Harakiri for the Sky" }
-    { "id": "hulder", "name": "Hulder" },
-    { "id": "sex-pistols", "name": "Sex Pistols w Frank Carter" },
   ],
   "Saturday": [
     { "id": "bring-me-the-horizon", "name": "Bring Me the Horizon" },
@@ -136,4 +134,3 @@
     { "id": "vltimas", "name": "VLTIMAS" }
   ]
 }
-
