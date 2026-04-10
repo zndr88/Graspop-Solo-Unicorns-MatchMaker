@@ -62,7 +62,9 @@
     { "id": "quicksand", "name": "Quicksand" },
     { "id": "cradle-of-filth", "name": "Cradle of Filth" },
     { "id": "leprous", "name": "Leprous" },
-    { "id": "harakiri-for-the-sky", "name": "Harakiri for the Sky" }
+    { "id": "harakiri-for-the-sky", "name": "Harakiri for the Sky" },
+    { "id": "hulder", "name": "Hulder" },
+    { "id": "sex-pistols", "name": "Sex Pistols w Frank Carter" }
   ],
   "Saturday": [
     { "id": "bring-me-the-horizon", "name": "Bring Me the Horizon" },
