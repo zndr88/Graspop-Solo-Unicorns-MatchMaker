@@ -32,10 +32,12 @@
     { "id": "slay-squad", "name": "Slay Squad" },
     { "id": "dying-wish", "name": "Dying Wish" },
     { "id": "distant", "name": "Distant" },
+    { "id": "mantah", "name": "Mantah" },
     { "id": "blackgold", "name": "Blackgold" }
   ],
   "Friday": [
     { "id": "volbeat", "name": "Volbeat" },
+    { "id": "asomvel", "name": "Asomvel" },
     { "id": "knocked-loose", "name": "Knocked Loose" },
     { "id": "breaking-benjamin", "name": "Breaking Benjamin" },
     { "id": "alter-bridge", "name": "Alter Bridge" },
@@ -64,6 +66,11 @@
     { "id": "leprous", "name": "Leprous" },
     { "id": "harakiri-for-the-sky", "name": "Harakiri for the Sky" },
     { "id": "hulder", "name": "Hulder" },
+    { "id": "infected-rain", "name": "Infected Rain" },
+    { "id": "suicidal-angels", "name": "Suicidal Angels" },
+    { "id": "triggerfinger", "name": "Triggerfinger" },
+    { "id": "tx2", "name": "TX2" },
+    { "id": "vower", "name": "Vower" },
     { "id": "sex-pistols", "name": "Sex Pistols w Frank Carter" }
   ],
   "Saturday": [
@@ -99,6 +106,7 @@
     { "id": "the-pretty-wild", "name": "The Pretty Wild" },
     { "id": "orden-ogan", "name": "Orden Ogan" },
     { "id": "vicious-rumors", "name": "Vicious Rumors" },
+    { "id": "terrorizer", "name": "Terrorizer" },
     { "id": "sonata-arctica", "name": "Sonata Arctica" }
   ],
   "Sunday": [
@@ -129,10 +137,12 @@
     { "id": "solstafir", "name": "Sólstafir" },
     { "id": "the-gathering", "name": "The Gathering" },
     { "id": "the-plot-in-you", "name": "The Plot In You" },
-    { "id": "tx2", "name": "TX2" },
     { "id": "venom", "name": "Venom" },
     { "id": "wargasm", "name": "Wargasm" },
     { "id": "killus", "name": "Killus" },
+    { "id": "evergrey", "name": "Evergrey" },
+	{ "id": "king-810", "name": "King 810" },
+    { "id": "zetra", "name": "Zetra" },
     { "id": "vltimas", "name": "VLTIMAS" }
   ]
 }
